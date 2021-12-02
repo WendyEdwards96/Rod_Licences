@@ -30,7 +30,7 @@ library(MASS)
 library(ggeffects)
 library(viridis)
 library(gdata)
-library(conflicted)
+library(conflicted) # This is cool I had no idea this existed!
   conflict_prefer("mutate", "dplyr", quiet = TRUE)
   conflict_prefer("select", "dplyr", quiet = TRUE)
   conflict_prefer("summarise", "dplyr", quiet = TRUE)
@@ -50,7 +50,7 @@ library(qdapRegex) # for rm_between
 options(scipen = 999)
 
 # rm(list=ls())
-
+library(here)
 ```
 
 
@@ -91,7 +91,7 @@ ends_with()
 ```{r Export Function}
 export_sheet <- function(EXCEL, SHEET, DATE, SEASON)
 {
-read_excel(file.path("..", "Data", EXCEL), sheet = SHEET) %>%
+read_excel(EXCEL, sheet = SHEET) %>%
   row_to_names(row_number = 2) %>% 
   mutate(across(c(contains("Licence"), contains("Total")), as.numeric)) %>%
   mutate(Total = rowSums(across(contains("Licence")), na.rm = T),
@@ -118,77 +118,48 @@ read_excel(file.path("..", "Data", EXCEL), sheet = SHEET) %>%
 }
 ```
 
+# Zach import test
+```{r}
 
+# file <- here::here("Data/200229 Area Sales 2019-20.xlsx")
 
-```{r Import 2019-2020}
+# Summary_Licences <- tibble()
 
-Jan_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190131", "2019-01-31",  "2019-20")
-Feb_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190228", "2019-02-28",  "2019-20")
-Mar_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190331", "2019-03-31",  "2019-20")
-Apr_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190430", "2019-04-30",  "2019-20")
-May_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190531", "2019-05-31",  "2019-20")
-Jun_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190630", "2019-06-30",  "2019-20")
-Jul_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190731", "2019-07-31",  "2019-20")
-Aug_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190831", "2019-08-31",  "2019-20")
-Sep_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190930", "2019-09-30",  "2019-20")
-Oct_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191031", "2019-10-31",  "2019-20")
-Nov_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191130", "2019-11-30",  "2019-20")
-Dec_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191231", "2019-12-31",  "2019-20")
-Jan_20 <- export_sheet("200229 Area Sales 2019-20.xlsx", "200131", "2020-01-31",  "2019-20")
-#Feb_20_S19_20 <- export_sheet("200229 Area Sales 2019-20.xlsx", "200229", "2020-02-29",  "2019-20")
+import_data <- function(file) {
+  
+  sheets <- excel_sheets(file) %>%
+  magrittr::extract(!. %in% c("Overview", "Additional Income", "Master"))
+  
+  season <- substr(file, nchar(file)-11, nchar(file)-5)
+  out <- tibble()
+  for(sheet in sheets) {
+    
+    y <- paste0(20, substr(sheet, 1, 2))
+    m <- substr(sheet, 3, 4)
+    d <- substr(sheet, 5, 6)
+    
+    df <- export_sheet(
+      EXCEL = file,
+      SHEET = sheet,
+      DATE = paste(y, m, d, sep = "-"),
+      SEASON = season
+    )
+    out <- bind_rows(out, df)
+  }
+  return(out)
+}
 
- 
-```
+data_files <- list.files(here::here("Data/")) %>% 
+  magrittr::extract(grepl("Area Sales", ., ignore.case = T)) %>%
+  magrittr::extract(!grepl("\\$", ., ignore.case = T)) # In case a file is open
 
-```{r Import 2020-2021}
-
-Feb_20_S20_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200229", "2020-02-29",  "2020-21")
-Mar_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200331", "2020-03-31",  "2020-21")
-Apr_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200430", "2020-04-30",  "2020-21")
-May_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200531", "2020-05-31",  "2020-21")
-Jun_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200630", "2020-06-30",  "2020-21")
-Jul_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200731", "2020-07-31",  "2020-21")
-Aug_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200831", "2020-08-31",  "2020-21")
-Sep_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200930", "2020-09-30",  "2020-21")
-Oct_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201031", "2020-10-31",  "2020-21")
-Nov_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201130", "2020-11-30",  "2020-21")
-Dec_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201231", "2020-12-31",  "2020-21")
-Jan_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "210131", "2021-01-31",  "2020-21")
-#Feb_21_S20_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "210228", "2021-02-28",  "2020-21")
-```
-
-
-```{r Import 2021-2022}
-
-Feb_21_S21_22 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210228", "2021-02-28",  "2021-22")
-Mar_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210331", "2021-03-31",  "2021-22")
-Apr_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210430", "2021-04-30",  "2021-22")
-May_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210531", "2021-05-31",  "2021-22")
-Jun_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210630", "2021-06-30",  "2021-22")
-Jul_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210731", "2021-07-31",  "2021-22")
-Aug_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210831", "2021-08-31",  "2021-22")
-Sep_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210930", "2021-09-30",  "2021-22")
-Oct_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "211031", "2021-10-31",  "2021-22")
-
-```
-
-```{r Bind}
-DF_obj <- lapply(ls()[ls()!="export_sheet"], get)
-Summary_Licences <- Summary_Licences <- dplyr::bind_rows(DF_obj) %>% 
-  mutate(Area = as.character(Area),
-         Area = gsub("&", "and", Area),
-         Area = gsub("\r\n", "", Area),
-         Area = as.factor(recode(Area, 
-                       "Solent and South downs" = "Solent and South Downs",
-                       "Thames" = "West Thames",
-                       "Kent South London and East Sussex" = "Kent and South London",
-                       "Devon Cornwall and the Isles of Scilly" = "Devon and Cornwall",
-                       "East Midlands" = "Derbyshire Nottinghamshire and Leicestershire",
-                       "North East" = "Northumberland Durham and Tees",
-                       "Lincolnshire and Northamptonshire" = "Lincolnshire and Nothamptonshire")))
-summary(Summary_Licences$Area)
-
-rm(list=(ls()[ls()!="Summary_Licences"]))
+Summary_Licences <- tibble()
+for(file in data_files) {
+  sale <- import_data(here::here(paste0("Data/",file)))
+  Summary_Licences <- bind_rows(Summary_Licences, sale)
+}
+rm(sale, data_files, file)
+gc()
 ```
 
 ```{r Ind. Months}
