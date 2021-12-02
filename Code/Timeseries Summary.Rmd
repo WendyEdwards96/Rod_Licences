@@ -1,0 +1,707 @@
+---
+title: "Rod Licence Timeseries"
+author: "Wendy Edwards"
+date: "23/11/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+###Project packages
+```{r setup chunk, message=FALSE, warning=FALSE}
+
+# general-use packages
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(janitor)
+library(patchwork)
+library(sessioninfo)
+library(cowplot)
+library(MASS)
+library(ggeffects)
+library(viridis)
+library(gdata)
+library(conflicted)
+  conflict_prefer("mutate", "dplyr", quiet = TRUE)
+  conflict_prefer("select", "dplyr", quiet = TRUE)
+  conflict_prefer("summarise", "dplyr", quiet = TRUE)
+  conflict_prefer("filter", "dplyr", quiet = TRUE)
+  conflict_prefer("first", "dplyr", quiet = TRUE)
+  conflict_prefer("here", "here", quiet = TRUE)
+  conflict_prefer("separate", "tidyr", quiet = TRUE)
+  conflict_prefer("unite", "tidyr", quiet = TRUE)
+
+  
+## Packages added for plotting
+library(ggplot2) ## for ggpredict graph
+library(broom)
+
+# Provide real numbers, not scientific notation.
+options(scipen = 999)
+
+# rm(list=ls())
+```
+
+#
+months = c("200229", 
+           "200131", 
+           "191231", 
+           "191130", 
+           "191031",
+           "190930",
+           "190831",
+           "190731",
+           "190630",
+           "190531",
+           "190430",
+           "190331")
+for(months in months) {
+file = read_file("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = months)
+months = file  
+}
+#
+```{r Import Summary 2019-2020}
+Feb_20_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "200229") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-02-29"),
+         Season = as.factor("2019-20"))
+names(Feb_20_sum)  
+
+Jan_20_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "200131") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-01-31"),
+         Season = as.factor("2019-20"))
+
+Dec_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "191231") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-12-31"),
+         Season = as.factor("2019-20"))
+
+Nov_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "191130") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-11-30"),
+         Season = as.factor("2019-20"))
+
+Oct_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "191031") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-10-31"),
+         Season = as.factor("2019-20"))
+
+Sep_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190930") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-09-30"),
+         Season = as.factor("2019-20"))
+
+Aug_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190831") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-08-31"),
+         Season = as.factor("2019-20"))
+
+Jul_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190731") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-07-31"),
+         Season = as.factor("2019-20"))
+
+Jun_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190630") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-06-30"),
+         Season = as.factor("2019-20"))
+
+May_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190531") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-05-31"),
+         Season = as.factor("2019-20"))
+
+
+Apr_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190430") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-04-30"),
+         Season = as.factor("2019-20"))
+
+
+Mar_19_sum <- read_excel("200229 - NES - PO - RL Buyers - 2019-20 season.xlsx", sheet = "190331") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2019-03-31"),
+         Season = as.factor("2019-20"))
+
+Feb_19_sum <- read_excel("200229 Area Sales 2019-20.xlsx", sheet = "190228") %>%
+  row_to_names(row_number = 2) %>% 
+  select(c("2019/20 Transactions",
+           "Sales Total")) %>% 
+  rename("Area" = "2019/20 Transactions",
+         "Licences" = "Sales Total") %>% 
+  drop_na %>% 
+  trim() %>% 
+  filter(!str_detect(Area, "Income")) %>% 
+  mutate(Area = recode(Area, "Total Sales" = "Total"),
+         Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(-999),
+         Date = as.Date("2019-02-28"),
+         Season = as.factor("2019-20"))
+Jan_19_sum <- read_excel("200229 Area Sales 2019-20.xlsx", sheet = "190131") %>%
+  row_to_names(row_number = 2) %>% 
+  select(c("2019/20 Transactions",
+           "Sales Total")) %>% 
+  rename("Area" = "2019/20 Transactions",
+         "Licences" = "Sales Total") %>% 
+  drop_na %>% 
+  trim() %>% 
+  filter(!str_detect(Area, "Income")) %>% 
+  mutate(Area = recode(Area, "Total Sales" = "Total"),
+         Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(-999),
+         Date = as.Date("2019-01-31"),
+         Season = as.factor("2019-20"))
+
+names(Feb_20_sum)  
+
+```
+
+```{r Import Summary 2020-2021}
+Feb_21_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "210228") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-02-28"),
+         Season = as.factor("2020-21"))
+names(Feb_21_sum)  
+
+Jan_21_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "210131") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-01-31"),
+         Season = as.factor("2020-21"))
+
+Dec_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "201231") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-12-31"),
+         Season = as.factor("2020-21"))
+
+Nov_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "201130") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-11-30"),
+         Season = as.factor("2020-21"))
+
+Oct_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "201031") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-10-31"),
+         Season = as.factor("2020-21"))
+
+Sep_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200930") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-09-30"),
+         Season = as.factor("2020-21"))
+
+Aug_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200831") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-08-31"),
+         Season = as.factor("2020-21"))
+
+Jul_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200731") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-07-31"),
+         Season = as.factor("2020-21"))
+
+Jun_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200630") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-06-30"),
+         Season = as.factor("2020-21"))
+
+May_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200531") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-05-31"),
+         Season = as.factor("2020-21"))
+
+
+Apr_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200430") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-04-30"),
+         Season = as.factor("2020-21"))
+
+
+Mar_20_sum <- read_excel("210228 NES - PO - RL Buyers - 2020-21.xlsx", sheet = "200331") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2020-03-31"),
+         Season = as.factor("2020-21"))
+```
+
+```{r Import Summary 2021-2022}
+
+Oct_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "211031") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-10-31"),
+         Season = as.factor("2021-22"))
+
+Sep_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210930") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-09-30"),
+         Season = as.factor("2021-22"))
+
+Aug_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210831") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-08-31"),
+         Season = as.factor("2021-22"))
+
+Jul_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210731") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-07-31"),
+         Season = as.factor("2021-22"))
+
+Jun_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210630") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-06-30"),
+         Season = as.factor("2021-22"))
+
+May_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210531") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-05-31"),
+         Season = as.factor("2021-22"))
+
+
+Apr_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210430") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-04-30"),
+         Season = as.factor("2021-22"))
+
+
+Mar_21_sum <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210331") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-03-31"),
+         Season = as.factor("2021-22"))
+
+Feb_21_sum2 <- read_excel("211031 NES - PO - RL Buyers - 2021-22 season.xlsx", sheet = "210228") %>%
+  row_to_names(row_number = 1) %>% 
+  select(c("Area",
+           "Licences",
+           "Anglers")) %>% 
+  replace_na(list(Area = "Total")) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = as.factor(Area),
+         Licences = as.numeric(Licences),
+         Anglers = as.numeric(Anglers),
+         Date = as.Date("2021-02-28"),
+         Season = as.factor("2021-22"))
+```
+
+```{r Bind}
+DF_obj <- lapply(ls(), get)
+Summary_Licences <- dplyr::bind_rows(DF_obj) %>% 
+  mutate(Area = as.character(Area),
+         Area = gsub("&", "and", Area),
+         Area = gsub("\r\n", "", Area),
+         Area = as.factor(recode(Area, 
+                       "Solent and South downs" = "Solent and South Downs",
+                       "Thames" = "West Thames",
+                       "Kent South London and East Sussex" = "Kent and South London",
+                       "Devon Cornwall and the Isles of Scilly" = "Devon and Cornwall",
+                       "East Midlands" = "Derbyshire Nottinghamshire and Leicestershire",
+                       "North East" = "Northumberland Durham and Tees")))
+rm(list=(ls()[ls()!="Summary_Licences"]))
+summary(Summary_Licences$Area)
+```
+
+```{r Idv. Months}
+
+Season_19_20 <- Summary_Licences %>% 
+  filter(Season == "2019-20") %>% 
+  group_by(Area) %>%
+  mutate(prev_totallicence = dplyr::lag(Licences, order_by = Date),
+         Licence_per_Month = Licences - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), Licences, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), Licences, Licence_per_Month))
+
+Season_20_21 <- Summary_Licences %>% 
+  filter(Season == "2020-21") %>% 
+  group_by(Area) %>%
+  mutate(prev_totallicence = dplyr::lag(Licences, order_by = Date),
+         Licence_per_Month = Licences - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), Licences, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), Licences, Licence_per_Month))
+
+Season_21_22 <- Summary_Licences %>% 
+  filter(Season == "2021-22") %>% 
+  group_by(Area) %>%
+  mutate(prev_totallicence = dplyr::lag(Licences, order_by = Date),
+         Licence_per_Month = Licences - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), Licences, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), Licences, Licence_per_Month))
+
+DF_obj <- lapply(ls()[ls()!="Summary_Licences"], get)
+Summary_Licences <- dplyr::bind_rows(DF_obj) 
+Summary_Licences <- Summary_Licences %>% 
+  mutate(Date_ym = format_ISO8601(Date, precision = "ym"))
+  
+```
+
+```{r Totals}
+
+
+SumTotal_Licence <- function(Location, StartDate, EndDate)
+{SumTotals <- Summary_Licences %>% 
+  filter(Area == Location) %>% 
+  filter(Date_ym >= StartDate & Date_ym <= EndDate)
+
+sum(SumTotals$Licence_per_Month)
+  }
+SumTotal_Licence("Total", "2019-10", "2020-09") 
+SumTotal_Licence("Total", "2020-10", "2021-09") 
+
+SumTotal_Licence("Total", "2019-01", "2019-12") 
+SumTotal_Licence("Total", "2020-01", "2020-12") 
+SumTotal_Licence("Total", "2021-01", "2021-10") 
+```
+
+```{r Plots}
+
+Total_Licences <- Summary_Licences %>% 
+  filter(Area == "Total") %>% 
+  mutate(#Year = format_ISO8601(Date, precision = "ym"),
+         Month = as.factor(substr(Date, 6,7)),
+         Year = as.factor(substr(Date, 1,4)))
+ 
+p <- ggplot(Total_Licences, aes(x=Month, y=Licence_per_Month, group = Year, colour = Year)) +
+  geom_line() + 
+  xlab("") +
+  #scale_x_date(limit=c(as.Date("2019"),as.Date("2020")))  +
+  theme_bw()
+p #+ scale_x_date(date_breaks = "1 month", date_labels = "%B")
+ 
+p <- ggplot(Total_Licences, aes(x=Date, y=Licences)) +
+  geom_line() + 
+  xlab("") +
+  #scale_x_date(limit=c(as.Date("2019"),as.Date("2020")))  +
+  theme_bw()
+p + scale_x_date(date_breaks = "1 month", date_labels = "%B")
+
+p <- ggplot(Total_Licences, aes(x=Month, y=Licence_per_Month, group = Year,col = Year)) +
+  geom_line() + 
+  geom_point() +
+  xlab("") +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+  #scale_x_date(limit=c(as.Date("2019-03-31"),as.Date("2021-02-28"))) 
+
+p
+p + scale_x_date(date_breaks = "1 month", date_labels = "%B")
+```
+
+```{r Cumulative plots}
+
+Total_Licences <- Summary_Licences %>% 
+  filter(Area == "Total")
+p <- ggplot(Total_Licences, aes(x=Date, y=Licences, group = Season, colour = Season)) +
+  geom_line() + 
+  xlab("") +
+  #scale_x_date(limit=c(as.Date("2019"),as.Date("2020")))  +
+  theme_bw()
+p + scale_x_date(date_breaks = "1 month", date_labels = "%B")
+
+```
+
+```{r Plot by Date}
+
+Plot_Timeseries <- function(Location, StartDate, EndDate)
+{
+Total_Licences <- Summary_Licences %>% 
+  filter(Area == Location)
+p <- ggplot(Total_Licences, aes(x=Date_ym, y=Licence_per_Month)) +
+  geom_line() + 
+  geom_point() +
+  xlab("") +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+  scale_x_date(date_breaks = "1 month", date_labels = "%B", limit=c(as.Date(StartDate),as.Date(EndDate))) 
+p 
+}
+
+Plot_Timeseries("Total", "2019-03", "2020-02")
+
+```

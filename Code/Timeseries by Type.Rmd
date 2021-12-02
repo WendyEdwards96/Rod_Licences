@@ -1,0 +1,331 @@
+---
+title: "Untitled"
+author: "Wendy Edwards"
+date: "26/11/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+###Project packages
+```{r setup chunk, message=FALSE, warning=FALSE}
+rm(list=(ls()))  # remove anything in environment
+
+# general-use packages
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(janitor)
+library(patchwork)
+library(sessioninfo)
+library(cowplot)
+library(MASS)
+library(ggeffects)
+library(viridis)
+library(gdata)
+library(conflicted)
+  conflict_prefer("mutate", "dplyr", quiet = TRUE)
+  conflict_prefer("select", "dplyr", quiet = TRUE)
+  conflict_prefer("summarise", "dplyr", quiet = TRUE)
+  conflict_prefer("filter", "dplyr", quiet = TRUE)
+  conflict_prefer("first", "dplyr", quiet = TRUE)
+  conflict_prefer("here", "here", quiet = TRUE)
+  conflict_prefer("separate", "tidyr", quiet = TRUE)
+  conflict_prefer("unite", "tidyr", quiet = TRUE)
+
+  
+## Packages added for plotting
+library(ggplot2) ## for ggpredict graph
+library(broom)
+#install.packages("qdapRegex")
+library(qdapRegex)
+# Provide real numbers, not scientific notation.
+options(scipen = 999)
+
+# rm(list=ls())
+```
+
+
+#```{r Testing}
+
+export_sheet_extotals <- function(EXCEL, SHEET, DATE, SEASON)
+{
+read_excel(EXCEL, sheet = SHEET) %>%
+  row_to_names(row_number = 2) %>% 
+  tidyr::pivot_longer(cols = c(contains("Licence")), names_to = "Type") %>% 
+  rename("Area" = endswith("Transactions"),
+         "Area_Total_Licences" = "Sales Total",
+         "No_Licence" = "value",
+         "Area_Income_Total" = "Income Total") %>% 
+  mutate(No_Licence = as.numeric(No_Licence),
+         No_Licence = replace_na(No_Licence, 0),
+         Area_Total_Licences = as.numeric(Area_Total_Licences),
+         Area_Total_Licences = replace_na(Area_Total_Licences, 0),
+         Area_Income_Total = as.numeric(Area_Income_Total),
+         Area_Income_Total = replace_na(Area_Income_Total, 0)) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = recode(Area, "Total Sales" = "Total"),
+         Area = as.factor(Area),
+         Type = as.factor(Type),
+         Date = as.Date(DATE),
+         Season = as.factor(SEASON))
+}
+test <- read_excel("200229 Area Sales 2019-20.xlsx", sheet = "190131") %>%
+  row_to_names(row_number = 2) %>% 
+  tidyr::pivot_longer(cols = c(contains("Licence"), "Sales Total", "Income Total"), names_to = "Type") %>% 
+  rename("Area" = ends_with("Transactions"),
+         "No_Licence" = "value")
+ends_with()
+
+#```
+
+```{r Export Function}
+export_sheet <- function(EXCEL, SHEET, DATE, SEASON)
+{
+read_excel(EXCEL, sheet = SHEET) %>%
+  row_to_names(row_number = 2) %>% 
+  tidyr::pivot_longer(cols = c(contains("Licence"), "Sales Total", "Income Total"), names_to = "Type") %>% 
+  rename("Area" = ends_with("Transactions"),
+         "No_Licence" = "value") %>% 
+  mutate(No_Licence = as.numeric(No_Licence),
+         No_Licence = replace_na(No_Licence, 0)) %>% 
+  drop_na %>% 
+  trim() %>% 
+  mutate(Area = recode(Area, "Total Sales" = "Total"),
+         Area = as.factor(Area),
+         Type = recode(Type, "Total Sales" = "Total Licences"),
+         Type = as.factor(Type),
+         Date = as.Date(DATE),
+         Season = as.factor(SEASON))
+}
+```
+
+
+```{r Import 2019-2020}
+
+Jan_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190131", "2019-01-31",  "2019-20")
+Feb_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190228", "2019-02-28",  "2019-20")
+Mar_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190331", "2019-03-31",  "2019-20")
+Apr_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190430", "2019-04-30",  "2019-20")
+May_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190531", "2019-05-31",  "2019-20")
+Jun_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190630", "2019-06-30",  "2019-20")
+Jul_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190731", "2019-07-31",  "2019-20")
+Aug_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190831", "2019-08-31",  "2019-20")
+Sep_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "190930", "2019-09-30",  "2019-20")
+Oct_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191031", "2019-10-31",  "2019-20")
+Nov_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191130", "2019-11-30",  "2019-20")
+Dec_19 <- export_sheet("200229 Area Sales 2019-20.xlsx", "191231", "2019-12-31",  "2019-20")
+Jan_20 <- export_sheet("200229 Area Sales 2019-20.xlsx", "200131", "2020-01-31",  "2019-20")
+#Feb_20_S19_20 <- export_sheet("200229 Area Sales 2019-20.xlsx", "200229", "2020-02-29",  "2019-20")
+
+ 
+```
+
+```{r Import 2020-2021}
+
+Feb_20_S20_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200229", "2020-02-29",  "2020-21")
+Mar_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200331", "2020-03-31",  "2020-21")
+Apr_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200430", "2020-04-30",  "2020-21")
+May_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200531", "2020-05-31",  "2020-21")
+Jun_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200630", "2020-06-30",  "2020-21")
+Jul_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200731", "2020-07-31",  "2020-21")
+Aug_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200831", "2020-08-31",  "2020-21")
+Sep_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "200930", "2020-09-30",  "2020-21")
+Oct_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201031", "2020-10-31",  "2020-21")
+Nov_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201130", "2020-11-30",  "2020-21")
+Dec_20 <- export_sheet("210228 Area Sales 2020-21.xlsx", "201231", "2020-12-31",  "2020-21")
+Jan_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "210131", "2021-01-31",  "2020-21")
+#Feb_21_S20_21 <- export_sheet("210228 Area Sales 2020-21.xlsx", "210228", "2021-02-28",  "2020-21")
+```
+
+
+```{r Import 2021-2022}
+
+Feb_21_S21_22 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210228", "2021-02-28",  "2021-22")
+Mar_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210331", "2021-03-31",  "2021-22")
+Apr_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210430", "2021-04-30",  "2021-22")
+May_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210531", "2021-05-31",  "2021-22")
+Jun_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210630", "2021-06-30",  "2021-22")
+Jul_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210731", "2021-07-31",  "2021-22")
+Aug_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210831", "2021-08-31",  "2021-22")
+Sep_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "210930", "2021-09-30",  "2021-22")
+Oct_21 <- export_sheet("211031 Area Sales 2021-22.xlsx", "211031", "2021-10-31",  "2021-22")
+
+```
+
+```{r Bind}
+DF_obj <- lapply(ls()[ls()!="export_sheet"], get)
+Summary_Licences <- Summary_Licences <- dplyr::bind_rows(DF_obj) %>% 
+  mutate(Area = as.character(Area),
+         Area = gsub("&", "and", Area),
+         Area = gsub("\r\n", "", Area),
+         Area = as.factor(recode(Area, 
+                       "Solent and South downs" = "Solent and South Downs",
+                       "Thames" = "West Thames",
+                       "Kent South London and East Sussex" = "Kent and South London",
+                       "Devon Cornwall and the Isles of Scilly" = "Devon and Cornwall",
+                       "East Midlands" = "Derbyshire Nottinghamshire and Leicestershire",
+                       "North East" = "Northumberland Durham and Tees",
+                       "Lincolnshire and Northamptonshire" = "Lincolnshire and Nothamptonshire")))
+summary(Summary_Licences$Area)
+
+rm(list=(ls()[ls()!="Summary_Licences"]))
+```
+
+```{r Ind. Months}
+
+Season_19_20 <- Summary_Licences %>% 
+  filter(Season == "2019-20") %>% 
+  group_by(Area, Type) %>%
+  mutate(prev_totallicence = dplyr::lag(No_Licence, order_by = Date),
+         Licence_per_Month = No_Licence - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), No_Licence, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), No_Licence, Licence_per_Month))
+
+Season_20_21 <- Summary_Licences %>% 
+  filter(Season == "2020-21") %>% 
+  group_by(Area, Type) %>%
+  mutate(prev_totallicence = dplyr::lag(No_Licence, order_by = Date),
+         Licence_per_Month = No_Licence - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), No_Licence, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), No_Licence, Licence_per_Month))
+
+Season_21_22 <- Summary_Licences %>% 
+  filter(Season == "2021-22") %>% 
+  group_by(Area, Type) %>%
+  mutate(prev_totallicence = dplyr::lag(No_Licence, order_by = Date),
+         Licence_per_Month = No_Licence - prev_totallicence,
+         prev_totallicence = if_else(is.na(prev_totallicence), No_Licence, prev_totallicence),
+         Licence_per_Month = if_else(is.na(Licence_per_Month), No_Licence, Licence_per_Month))
+
+DF_obj <- lapply(ls()[ls()!="Summary_Licences"], get)
+All_Licences <- dplyr::bind_rows(DF_obj) 
+Licences <- All_Licences %>% 
+  mutate(Date_Sep = format_ISO8601(Date, precision = "ym"),
+         Date_ym = format_ISO8601(Date, precision = "ym"),
+         Type = recode(Type, "Sales Total" = "All Types")) %>% 
+  separate(Date_Sep, sep="-", into = c("Year", "Month")) %>% 
+  mutate(Month = as.factor(Month),
+    MonthAb = month.name[Month],
+    MonthAb = factor(MonthAb, levels = month.name),
+    Year = as.factor(Year),
+    Type2 = Type,
+    Type = as.character(Type),
+    LicenceDisType = str_extract(Type, "\\(.*\\)"),
+    LicenceDisType = as.factor(str_remove_all(LicenceDisType, "[\\(\\)]")),
+    Type = rm_between(Type, "(", ")")) %>% 
+  separate(LicenceDisType, c("AgeCat", "DisType"), ", ") %>% 
+  mutate(DisType = replace_na(DisType, "Abled"),
+         AgeCat = replace_na(AgeCat, "1"),
+         AgeCat = if_else(AgeCat != "1", AgeCat, Type),
+         Type = as.factor(Type)) %>% 
+  trim()
+
+```
+
+
+```{r Sum licences per month per area for each Type of Licence}
+Summary_Licences <- Licences %>% 
+  filter(AgeCat != "Junior") %>% 
+  group_by(Date, Area, Type) %>% 
+  mutate(Licences = sum(Licence_per_Month)) #%>% 
+  ungroup()
+
+summary(Summary_Licences$Type)
+summary(Licences$Type)
+
+```
+
+
+```{r Totals}
+
+
+SumTotal_Licence <- function(Location, LicenceType, StartDate, EndDate)
+{SumTotals <- Summary_Licences %>% 
+  filter(Area == Location & Type == LicenceType) %>% 
+  filter(Date_ym >= StartDate & Date_ym <= EndDate)
+
+sum(SumTotals$Licence_per_Month)
+  }
+
+SumTotal_Licence("Total", "All Types", "2019-10", "2020-09") 
+
+
+
+```
+
+
+```{r}
+
+plotTimeseries <- function(LicenceType, Location)
+{
+  Total_Licences <- Summary_Licences %>% 
+    filter(Area == Location & Type == LicenceType)
+  p <- ggplot(Total_Licences, aes(x=factor(MonthAb,levels=month.name), y=Licences, group = Year, colour = Year)) +
+  geom_line() +
+  geom_point()+
+  labs(x = "Month", y = LicenceType) +
+  theme_bw() 
+p
+
+}
+summary(Summary_Licences$Type)
+All_Types <- plotTimeseries("All Types", "Total")
+#Coarse 2 Rod Licence
+Coarse12month2Rod <- plotTimeseries("Coarse 12 month 2 Rod Licence", "Total")
+#Coarse 3 Rod Licence
+Coarse12month3Rod <- plotTimeseries("Coarse 12 month 3 Rod Licence", "Total")
+#Salmon Long Term
+Salmon12month1Rod <- plotTimeseries("Salmon 12 month 1 Rod Licence", "Total")
+#Coarse Short Term
+Coarse1Day2Rod <- plotTimeseries("Coarse 1 day 2 Rod Licence", "Total")
+Coarse8Day2Rod <- plotTimeseries("Coarse 8 day 2 Rod Licence", "Total")
+#Salmon Short Term
+Salmon1Day2Rod <- plotTimeseries("Salmon 1 day 1 Rod Licence", "Total")
+Salmon8Day2Rod <- plotTimeseries("Salmon 8 day 1 Rod Licence", "Total")
+Salmon8Day2Rod
+
+ShortTerm <- All_Types / (Coarse1Day2Rod + Coarse8Day2Rod) / (Salmon1Day2Rod + Salmon8Day2Rod)
+ShortTerm
+LongTerm <- All_Types / Coarse12month2Rod / Coarse12month3Rod / Salmon12month1Rod
+LongTerm
+All <- (All_Types + Coarse12month2Rod) / (Coarse12month3Rod + Salmon12month1Rod) / (Coarse1Day2Rod + Coarse8Day2Rod) / (Salmon1Day2Rod + Salmon8Day2Rod)
+All
+```
+
+#```{r Saves pdf}
+
+ggsave("../Figures/All_Types.pdf", plot = All_Types, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Coarse12month2Rod.pdf", plot = Coarse12month2Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Coarse12month3Rod.pdf", plot = Coarse12month3Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Salmon12month1Rod.pdf", plot = Salmon12month1Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Coarse1Day2Rod.pdf", plot = Coarse1Day2Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Coarse8Day2Rod.pdf", plot = Coarse8Day2Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Salmon1Day2Rod.pdf", plot = Salmon1Day2Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Salmon8Day2Rod.pdf", plot = Salmon8Day2Rod, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Short_Term.pdf", plot = ShortTerm, device = "pdf", height = 15, width = 15)
+ggsave("../Figures/Long_Term.pdf", plot = LongTerm, device = "pdf", height = 15, width = 15)
+
+#```
+
+
+```{r Saves Jpg}
+ggsave("../Figures/All_Types_No_Juniors.jpeg", plot = All_Types, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Coarse12month2Rod_No_Juniors.jpeg", plot = Coarse12month2Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Coarse12month3Rod_No_Juniors.jpeg", plot = Coarse12month3Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Salmon12month1Rod_No_Juniors.jpeg", plot = Salmon12month1Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Coarse1Day2Rod_No_Juniors.jpeg", plot = Coarse1Day2Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Coarse8Day2Rod_No_Juniors.jpeg", plot = Coarse8Day2Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Salmon1Day2Rod_No_Juniors.jpeg", plot = Salmon1Day2Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Salmon8Day2Rod_No_Juniors.jpeg", plot = Salmon8Day2Rod, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Short_Term_No_Juniors.jpeg", plot = ShortTerm, device = "jpeg", height = 15, width = 15)
+ggsave("../Figures/Long_Term_No_Juniors.jpeg", plot = LongTerm, device = "jpeg", height = 15, width = 15)
+
+ggsave("../Figures/All_LicenceTypes_No_Juniors.jpeg", plot = All, device = "jpeg", height = 15, width = 20)
+```
+
+```{r}
+
+```
